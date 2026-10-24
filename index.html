@@ -21,7 +21,10 @@
         <strong id="petName">—</strong>
         <span id="petMeta"></span>
       </div>
-      <button class="icon-btn" id="resetBtn" aria-label="Recommencer">↺</button>
+      <div class="top-btns">
+        <button class="icon-btn" id="dexBtn" aria-label="Digidex">📖</button>
+        <button class="icon-btn" id="resetBtn" aria-label="Recommencer">↺</button>
+      </div>
     </header>
 
     <div class="shell">
@@ -37,11 +40,13 @@
       <div class="stat" data-key="energy"><span>⚡ Énergie</span><i><b></b></i></div>
       <div class="stat" data-key="clean"><span>🫧 Hygiène</span><i><b></b></i></div>
       <div class="stat" data-key="health"><span>❤️ Santé</span><i><b></b></i></div>
+      <p class="record" id="record"></p>
     </section>
 
     <nav class="actions" id="actions">
       <button data-act="feed"><span>🍙</span>Nourrir</button>
       <button data-act="play"><span>🎾</span>Jouer</button>
+      <button data-act="fight"><span>⚔️</span>Combat</button>
       <button data-act="wash"><span>🛁</span>Laver</button>
       <button data-act="heal"><span>💊</span>Soigner</button>
       <button data-act="light"><span id="lightIcon">💡</span><em id="lightLabel">Dormir</em></button>
@@ -56,6 +61,11 @@
     <nav class="actions hidden" id="gameMenu">
       <button data-guess="left"><span>⬅️</span>Gauche</button>
       <button data-guess="right"><span>➡️</span>Droite</button>
+    </nav>
+
+    <nav class="actions hidden" id="battleMenu">
+      <button id="fireBtn"><span>🔥</span>Tirer !</button>
+      <button id="fleeBtn"><span>🏳️</span>Fuir</button>
     </nav>
   </main>
 
@@ -73,6 +83,17 @@
       <h2>👻 Repose en paix</h2>
       <p id="deathText"></p>
       <button type="submit">Nouvel œuf</button>
+    </form>
+  </dialog>
+
+  <dialog id="dexDialog">
+    <form method="dialog">
+      <h2>📖 Digidex <small id="dexCount"></small></h2>
+      <h3>Formes</h3>
+      <div class="dex" id="dexForms"></div>
+      <h3>Adversaires vaincus</h3>
+      <div class="dex" id="dexFoes"></div>
+      <button type="submit">Fermer</button>
     </form>
   </dialog>
 

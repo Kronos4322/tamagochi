@@ -42,6 +42,8 @@ html, body {
 .info strong { font-size: 1.4rem; letter-spacing: .02em; }
 .info span { color: var(--muted); font-size: .9rem; }
 
+.top-btns { display: flex; gap: 8px; }
+
 .icon-btn {
   width: 40px; height: 40px;
   border-radius: 50%;
@@ -97,14 +99,18 @@ canvas { display: block; width: 100%; aspect-ratio: 32 / 24; image-rendering: pi
   transition: width .5s, background .5s;
 }
 
+.record { margin: 4px 0 0; text-align: center; color: var(--muted); font-size: .82rem; white-space: pre; }
+
 .actions {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: auto;
 }
-#feedMenu { grid-template-columns: repeat(3, 1fr); }
 #gameMenu { grid-template-columns: repeat(2, 1fr); }
+#battleMenu { grid-template-columns: 2fr 1fr; }
+#gameMenu button, #battleMenu button { padding: 16px 4px; font-size: .9rem; }
+#fireBtn { background: #ffd166; }
 .hidden { display: none; }
 
 .actions button {
@@ -125,7 +131,6 @@ canvas { display: block; width: 100%; aspect-ratio: 32 / 24; image-rendering: pi
 .actions button span { font-size: 1.6rem; line-height: 1; }
 .actions button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, .25); }
 .actions button:disabled { opacity: .45; }
-#gameMenu button { padding: 16px 4px; font-size: .9rem; }
 
 dialog {
   border: 0;
@@ -137,6 +142,24 @@ dialog {
   text-align: center;
 }
 dialog::backdrop { background: rgba(20, 10, 30, .7); }
+#dexDialog { width: min(94vw, 420px); max-height: 88dvh; overflow-y: auto; padding: 18px 14px; }
+#dexDialog h3 { margin: 14px 0 8px; font-size: .95rem; text-align: left; }
+#dexDialog small { font-size: .9rem; opacity: .7; }
+.dex { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+.dex .card {
+  background: #b7c79a;
+  border-radius: 12px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: #1d2b1a;
+}
+.dex .card.unknown { background: #e9dbe3; color: #8a6b7c; }
+.dex canvas { width: 56px; height: 56px; aspect-ratio: auto; image-rendering: pixelated; }
+.dex .card strong { font-size: .85rem; }
+.dex .card small { font-size: .68rem; line-height: 1.2; opacity: 1; }
 dialog h2 { margin: 0 0 8px; }
 dialog input {
   width: 100%;

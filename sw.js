@@ -1,5 +1,5 @@
 // Service worker : met le jeu en cache pour qu'il fonctionne hors-ligne.
-const CACHE = 'tamagochi-v1';
+const CACHE = 'tamagochi-v2';
 const FILES = ['./', 'index.html', 'style.css', 'game.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
