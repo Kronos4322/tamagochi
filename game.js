@@ -210,6 +210,12 @@ const SPRITES = {
   poop: ['..#....', '.#.#...', '..#.#..', '.#...#.', '#######'],
   meal: ['..###..', '.#...#.', '#.....#', '#######', '#.....#', '.#####.'],
   snack: ['#.###.#', '.#...#.', '#.....#', '.#...#.', '#.###.#'],
+  meat: ['.###...', '#...#..', '#....#.', '.#...#.', '..###.#', '.....##'],
+  apple: ['...##..', '.##.##.', '#.....#', '#.....#', '#.....#', '.#####.'],
+  cake: ['...#...', '..###..', '#######', '#.#.#.#', '#.....#', '#######'],
+  mini: ['.#####.', '#.e.e.#', '#..E..#', '#.mmm.#', '.#####.'],
+  berry: ['.#.', '#.#', '###'],
+  rock: ['#.#', '.#.', '#.#'],
   heart: ['.##.##.', '#..#..#', '#.....#', '.#...#.', '..#.#..', '...#...'],
   skull: ['.###.', '#.#.#', '#####', '.###.', '.#.#.'],
   sparkle: ['..#..', '..#..', '##.##', '..#..', '..#..'],
@@ -224,19 +230,28 @@ const SPRITES = {
 
 /* --- Monstres : formes du joueur et adversaires ------------------ */
 const MONSTERS = {
-  bulle: { name: 'Bulle', sprite: 'baby', stage: 'Bébé', atk: 0, hint: "Éclot de l'œuf" },
-  kitsu: { name: 'Kitsu', sprite: 'child', stage: 'Enfant', atk: 1, hint: 'Enfant bien soigné (2 erreurs max)' },
-  grumo: { name: 'Grumo', sprite: 'grumo', stage: 'Enfant', atk: 1, hint: 'Enfant négligé (3 erreurs ou +)' },
-  lumen: { name: 'Lumen', sprite: 'adult', stage: 'Adulte', atk: 2, hint: 'Adulte équilibré' },
-  drakor: { name: 'Drakor', sprite: 'drakor', stage: 'Adulte', atk: 3, hint: '5 victoires ou + en devenant adulte' },
-  bouboule: { name: 'Bouboule', sprite: 'bouboule', stage: 'Adulte', atk: 2, hint: 'Peser 25 g ou + en devenant adulte' },
-  spectra: { name: 'Spectra', sprite: 'spectra', stage: 'Adulte', atk: 3, hint: '6 erreurs de soin ou +' },
+  bulle: { name: 'Bulle', sprite: 'baby', stage: 'Bébé', atk: 0, hint: "Éclot de l'œuf", likes: 'candy', dislikes: 'meat' },
+  kitsu: { name: 'Kitsu', sprite: 'child', stage: 'Enfant', atk: 1, hint: 'Enfant bien soigné (2 erreurs max)', likes: 'fruit', dislikes: 'meat' },
+  grumo: { name: 'Grumo', sprite: 'grumo', stage: 'Enfant', atk: 1, hint: 'Enfant négligé (3 erreurs ou +)', likes: 'meat', dislikes: 'fruit' },
+  lumen: { name: 'Lumen', sprite: 'adult', stage: 'Adulte', atk: 2, hint: 'Adulte équilibré', likes: 'rice', dislikes: 'cake' },
+  drakor: { name: 'Drakor', sprite: 'drakor', stage: 'Adulte', atk: 3, hint: '5 victoires ou + en devenant adulte', likes: 'meat', dislikes: 'candy' },
+  bouboule: { name: 'Bouboule', sprite: 'bouboule', stage: 'Adulte', atk: 2, hint: 'Peser 25 g ou + en devenant adulte', likes: 'cake', dislikes: 'fruit' },
+  spectra: { name: 'Spectra', sprite: 'spectra', stage: 'Adulte', atk: 3, hint: '6 erreurs de soin ou +', likes: 'candy', dislikes: 'rice' },
   gluon: { name: 'Gluon', sprite: 'gluon' },
   chauvo: { name: 'Chauvo', sprite: 'chauvo' },
   rocaille: { name: 'Rocaille', sprite: 'rocaille' },
 };
 const FORM_IDS = ['bulle', 'kitsu', 'grumo', 'lumen', 'drakor', 'bouboule', 'spectra'];
 const ENEMY_IDS = ['gluon', 'chauvo', 'grumo', 'rocaille', 'bouboule', 'spectra', 'drakor', 'lumen'];
+
+// Aliments : les friandises (treat) se mangent même le ventre plein… à tes risques
+const FOODS = {
+  rice: { name: 'Riz', icon: '🍚', sprite: 'meal', desc: '+Faim', hunger: 30, weight: 1, line: 'Miam !' },
+  meat: { name: 'Viande', icon: '🍖', sprite: 'meat', desc: '++Faim +Poids', hunger: 45, weight: 3, line: 'Ça cale bien !' },
+  fruit: { name: 'Fruit', icon: '🍎', sprite: 'apple', desc: '+Faim +Santé', hunger: 15, health: 10, weight: 0, line: 'Croquant et sain 🍎' },
+  candy: { name: 'Bonbon', icon: '🍬', sprite: 'snack', desc: '+Joie +Poids', hunger: 5, happy: 15, weight: 2, treat: true, line: 'Trop bon !! 🍬' },
+  cake: { name: 'Gâteau', icon: '🍰', sprite: 'cake', desc: '++Joie ++Poids', hunger: 15, happy: 30, weight: 5, treat: true, line: 'Quel festin ! 🍰' },
+};
 
 const STAGES = [
   { id: 'egg', label: 'Œuf', until: 1 * MIN },
@@ -307,6 +322,9 @@ const SFX = {
   alert: [[1568, 0.06], [0, 0.06], [1568, 0.06]],
   night: [[784, 0.14], [659, 0.14], [523, 0.24]],
   morning: [[523, 0.1], [659, 0.1], [784, 0.2]],
+  jump: [[400, 0.04], [600, 0.04], [900, 0.06]],
+  catch: [[1319, 0.04], [1760, 0.06]],
+  yuck: [[300, 0.08], [250, 0.08], [200, 0.16]],
 };
 let audio = null;
 
@@ -364,6 +382,7 @@ function newPet(name) {
     mistakes: 0,
     wins: 0,
     losses: 0,
+    tastes: {},
     form: null,
     formStage: 'egg',
     diedAt: null,
@@ -375,7 +394,7 @@ function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     // Les anciennes sauvegardes n'ont pas tous les champs
-    const defaults = { mistakes: 0, wins: 0, losses: 0, form: null, formStage: null, night: false, lightsOn: true, bedAt: 0, lightMistake: false };
+    const defaults = { mistakes: 0, wins: 0, losses: 0, tastes: {}, form: null, formStage: null, night: false, lightsOn: true, bedAt: 0, lightMistake: false };
     return raw ? { ...defaults, ...JSON.parse(raw) } : null;
   } catch {
     return null;
@@ -397,9 +416,9 @@ function save(force = false) {
 
 function loadDex() {
   try {
-    return { forms: {}, foes: {}, ...JSON.parse(localStorage.getItem(DEX_KEY) || '{}') };
+    return { forms: {}, foes: {}, best: {}, ...JSON.parse(localStorage.getItem(DEX_KEY) || '{}') };
   } catch {
-    return { forms: {}, foes: {} };
+    return { forms: {}, foes: {}, best: {} };
   }
 }
 
@@ -604,7 +623,8 @@ function analyze(sprite) {
 
 function blit(sprite, x, y, ink, opts = {}) {
   const { W, cells } = analyze(sprite);
-  const pixels = cells.map(([cx, cy, k]) => {
+  const visible = opts.cutLeft ? cells.filter(([cx]) => cx >= opts.cutLeft) : cells;
+  const pixels = visible.map(([cx, cy, k]) => {
     let a;
     if (k === 'e') a = opts.closed ? TONES.f : 1;
     else if (k === 'm') a = opts.sad ? TONES.f : 1;
@@ -684,13 +704,14 @@ function draw() {
 function drawAnim(x, y, w, ink, now) {
   if (!anim) return;
   if (now > anim.until && anim.type !== 'game') { anim = null; return; }
-  const t = Math.floor((anim.until - now) / 400);
   switch (anim.type) {
-    case 'meal':
-    case 'snack': {
-      const food = SPRITES[anim.type];
-      const bites = Math.max(0, food.length - (4 - t) * 2);
-      if (bites) blit(food.slice(0, bites), x + w + 1, y + 3, ink);
+    case 'eat': {
+      // L'aliment disparaît bouchée par bouchée, côté monstre d'abord
+      const food = SPRITES[FOODS[anim.data.food].sprite];
+      const k = 1 - (anim.until - now) / anim.ms;
+      const cut = Math.floor(k * 1.3 * food[0].length);
+      if (cut < food[0].length) blit(food, x + w + 1, y + 3, ink, { cutLeft: cut });
+      else if (anim.data.like && frame % 2) blit(SPRITES.heart, x + w + 1, 1, ink);
       break;
     }
     case 'happy':
@@ -980,7 +1001,7 @@ function updateUI() {
   });
 
   const isEgg = stage.id === 'egg';
-  const busy = anim?.type === 'game' || !!battle;
+  const busy = anim?.type === 'game' || !!battle || !!minigame;
   document.querySelectorAll('#actions button').forEach((b) => {
     b.disabled = !pet.alive || isEgg || busy || (pet.asleep && b.dataset.act !== 'light');
   });
@@ -993,25 +1014,27 @@ function updateUI() {
 }
 
 function showMenu(id) {
-  ['#actions', '#feedMenu', '#gameMenu', '#battleMenu'].forEach((m) => $(m).classList.toggle('hidden', m !== id));
+  ['#actions', '#feedMenu', '#playMenu', '#gameMenu', '#catchMenu', '#jumpMenu', '#battleMenu'].forEach((m) => $(m).classList.toggle('hidden', m !== id));
 }
 
-const ANIM_SFX = { meal: 'eat', snack: 'eat', happy: 'happy', no: 'no', wash: 'wash', heal: 'heal', evolve: 'evolve' };
+const ANIM_SFX = { eat: 'eat', happy: 'happy', no: 'no', wash: 'wash', heal: 'heal', evolve: 'evolve' };
 function startAnim(type, ms = 1600, data = {}, sound = true) {
-  anim = { type, until: Date.now() + ms, data };
+  anim = { type, until: Date.now() + ms, ms, data };
   if (sound && ANIM_SFX[type]) sfx(ANIM_SFX[type]);
 }
 
 /* --- Actions ---------------------------------------------------- */
 const actions = {
   feed() {
+    renderFeedMenu();
     showMenu('#feedMenu');
   },
   play() {
     if (pet.energy < 15) { startAnim('no'); return say(`${pet.name} est trop fatigué·e pour jouer.`); }
-    showMenu('#gameMenu');
-    startAnim('game', 0, { round: 0, score: 0, shown: false });
-    say(`Manche 1/5 — devine où ${pet.name} va regarder !`, 4000);
+    const best = (id) => (dex.best[id] ? ` · record ${dex.best[id]}` : '');
+    $('#bestCatch').textContent = `Attrape-fruits${best('catch')}`;
+    $('#bestJump').textContent = `Saut${best('jump')}`;
+    showMenu('#playMenu');
   },
   fight() {
     startBattle();
@@ -1046,25 +1069,211 @@ const actions = {
   },
 };
 
-function feed(kind) {
+/* --- Alimentation ----------------------------------------------- */
+function renderFeedMenu() {
+  const buttons = Object.entries(FOODS).map(([id, f]) => {
+    const b = document.createElement('button');
+    const taste = pet.tastes[`${pet.form}:${id}`];
+    b.innerHTML = `<span>${f.icon}</span>${f.name}<small>${f.desc}</small>`;
+    if (taste) b.insertAdjacentHTML('beforeend', `<i class="taste">${taste === 'like' ? '❤️' : '🤢'}</i>`);
+    b.addEventListener('click', () => { buzz(); sfx('tap'); feed(id); save(); updateUI(); });
+    return b;
+  });
+  const back = document.createElement('button');
+  back.innerHTML = '<span>↩</span>Retour';
+  back.addEventListener('click', () => { sfx('tap'); showMenu('#actions'); });
+  $('#feedMenu').replaceChildren(...buttons, back);
+}
+
+function feed(id) {
   showMenu('#actions');
-  if (kind === 'back') return;
-  if (kind === 'meal' && pet.hunger >= 95) {
+  const food = FOODS[id];
+  const form = MONSTERS[pet.form] || {};
+  const full = pet.hunger >= 95;
+  if (full && !food.treat) {
     startAnim('no');
     return say(`${pet.name} n'a plus faim.`);
   }
-  if (kind === 'meal') {
-    pet.hunger = clamp(pet.hunger + 30);
-    pet.weight += 1;
-    say('Miam !');
-  } else {
-    pet.hunger = clamp(pet.hunger + 8);
-    pet.happy = clamp(pet.happy + 15);
-    pet.weight += 2;
-    if (pet.weight > 40) pet.health = clamp(pet.health - 3);
-    say('Trop bon !! 🍬');
+
+  // Chaque forme a ses goûts : on les découvre en lui donnant à manger
+  const taste = form.likes === id ? 'like' : form.dislikes === id ? 'dislike' : null;
+  if (taste) pet.tastes[`${pet.form}:${id}`] = taste;
+  if (taste === 'dislike' && Math.random() < 0.5) {
+    pet.happy = clamp(pet.happy - 5);
+    startAnim('no', 1600, {}, false);
+    sfx('yuck');
+    return say(`Beurk ! ${pet.name} déteste ça 🤢`);
   }
-  startAnim(kind);
+
+  pet.hunger = clamp(pet.hunger + food.hunger);
+  pet.happy = clamp(pet.happy + (food.happy || 0) + (taste === 'like' ? 15 : 0) - (taste === 'dislike' ? 10 : 0));
+  pet.health = clamp(pet.health + (food.health || 0));
+  pet.weight += food.weight;
+  if (pet.weight > 40) pet.health = clamp(pet.health - 3);
+  startAnim('eat', 1800, { food: id, like: taste === 'like' });
+
+  if (full && Math.random() < 0.3) {
+    pet.sick = true;
+    say(`${pet.name} a trop mangé… indigestion 🤢`, 3500);
+  } else if (taste === 'like') {
+    say(`${food.name}, son plat préféré ! 😍`);
+  } else if (taste === 'dislike') {
+    say(`${pet.name} mange en grimaçant…`);
+  } else {
+    say(food.line);
+  }
+}
+
+/* --- Mini-jeux en temps réel ------------------------------------ */
+let minigame = null;
+const GROUND = ROWS - 6; // ligne du haut du petit avatar
+
+function startCatch() {
+  const now = Date.now();
+  const g = {
+    type: 'catch', t0: now, end: now + 25e3, x: 12, lives: 3, score: 0,
+    items: [], nextSpawn: now + 600, lastFall: now, hold: 0, lastMove: 0, hurtUntil: 0,
+  };
+  g.update = () => {
+    const t = Date.now(), el = t - g.t0;
+    if (g.hold && t - g.lastMove > 70) { g.x = clamp(g.x + g.hold, 0, COLS - 7); g.lastMove = t; }
+    if (t >= g.nextSpawn && t < g.end - 1200) {
+      g.items.push({ x: Math.floor(rand(0, COLS - 3)), y: 1, bomb: Math.random() < 0.18 + el / 150e3 });
+      g.nextSpawn = t + Math.max(330, 760 - el / 45);
+    }
+    const fall = Math.max(60, 140 - el / 300);
+    const rows = Math.floor((t - g.lastFall) / fall);
+    if (rows > 0) {
+      g.lastFall += rows * fall;
+      g.items.forEach((it) => (it.y += rows));
+    }
+    g.items = g.items.filter((it) => {
+      const touches = it.y + 2 >= GROUND && it.y <= GROUND + 2 && it.x + 2 >= g.x && it.x <= g.x + 6;
+      if (!touches) return it.y < ROWS;
+      if (it.bomb) {
+        g.lives--;
+        g.hurtUntil = t + 600;
+        sfx('hit');
+        buzz(80);
+      } else {
+        g.score++;
+        sfx('catch');
+        say(`🍎 ${g.score}`, 30e3);
+      }
+      return false;
+    });
+    if (t >= g.end || g.lives <= 0) finishGame('catch', g.score);
+  };
+  g.draw = () => {
+    const t = Date.now();
+    clearLCD(INK, 0.06);
+    const left = Math.max(0, Math.round((COLS * (g.end - t)) / 25e3));
+    for (let x = 0; x < left; x++) px(x, 0, INK, 0.5);
+    drawPips(g.lives, 3, false);
+    g.items.forEach((it) => blit(it.bomb ? SPRITES.rock : SPRITES.berry, it.x, it.y, INK));
+    if (!(t < g.hurtUntil && Math.floor(t / 100) % 2)) blit(SPRITES.mini, g.x, GROUND, INK);
+  };
+  minigame = g;
+  showMenu('#catchMenu');
+  say('Attrape les fruits, évite les cailloux ✖', 3000);
+}
+
+function startJump() {
+  const now = Date.now();
+  const JUMP_MS = 800, JUMP_H = 9;
+  const g = {
+    type: 'jump', t0: now, score: 0, obstacles: [], nextSpawn: now + 1400,
+    lastMove: now, jumpAt: 0, overAt: 0, shift: 0,
+  };
+  const top = (t) => {
+    const k = (t - g.jumpAt) / JUMP_MS;
+    return k >= 0 && k < 1 ? GROUND - Math.round(JUMP_H * 4 * k * (1 - k)) : GROUND;
+  };
+  g.jump = () => {
+    const t = Date.now();
+    if (g.overAt || t - g.jumpAt < JUMP_MS) return;
+    g.jumpAt = t;
+    sfx('jump');
+  };
+  g.update = () => {
+    const t = Date.now();
+    if (g.overAt) {
+      if (t - g.overAt > 900) finishGame('jump', g.score);
+      return;
+    }
+    // Défilement basé sur le temps réel (indépendant de la cadence de la boucle)
+    const speed = Math.max(30, 75 - g.score * 2);
+    const cells = Math.floor((t - g.lastMove) / speed);
+    if (cells > 0) {
+      g.lastMove += cells * speed;
+      g.shift += cells;
+      g.obstacles.forEach((o) => (o.x -= cells));
+    }
+    if (t >= g.nextSpawn) {
+      g.obstacles.push({ x: COLS, w: Math.random() < 0.5 ? 2 : 3, h: Math.random() < 0.6 ? 2 : 3 });
+      g.nextSpawn = t + rand(900, 1700) * Math.max(0.55, 1 - g.score * 0.02);
+    }
+    const y = top(t);
+    for (const o of g.obstacles) {
+      if (!o.passed && o.x + o.w < 3) {
+        o.passed = true;
+        g.score++;
+        sfx('catch');
+        say(`🦘 ${g.score}`, 30e3);
+      }
+      const overlapX = o.x <= 8 && o.x + o.w - 1 >= 4; // hitbox un peu plus petite que le dessin
+      const overlapY = y + 4 >= ROWS - 1 - o.h;
+      if (overlapX && overlapY && !g.overAt) {
+        g.overAt = t;
+        sfx('hit');
+        buzz(120);
+      }
+    }
+    g.obstacles = g.obstacles.filter((o) => o.x > -4);
+  };
+  g.draw = () => {
+    const t = Date.now();
+    clearLCD(INK, 0.06);
+    for (let x = 0; x < COLS; x++) px(x, ROWS - 1, INK, (x + g.shift) % 4 === 0 ? 1 : 0.4);
+    for (const o of g.obstacles) {
+      for (let i = 0; i < o.w; i++) for (let j = 0; j < o.h; j++) px(o.x + i, ROWS - 2 - j, INK, j === o.h - 1 || i === 0 ? 1 : 0.5);
+    }
+    if (!(g.overAt && Math.floor(t / 100) % 2)) blit(SPRITES.mini, 3, top(t), INK, { closed: !!g.overAt });
+  };
+  minigame = g;
+  showMenu('#jumpMenu');
+  say('Saute par-dessus les rochers !', 2500);
+}
+
+function finishGame(type, score) {
+  minigame = null;
+  showMenu('#actions');
+  const best = dex.best[type] || 0;
+  const record = score > best;
+  if (record) {
+    dex.best[type] = score;
+    saveDex();
+  }
+  const fun = clamp(score * (type === 'catch' ? 3 : 4), 5, 35);
+  pet.happy = clamp(pet.happy + fun);
+  pet.energy = clamp(pet.energy - 10);
+  pet.weight = Math.max(1, pet.weight - 1);
+  if (type === 'catch') pet.hunger = clamp(pet.hunger + Math.min(15, score)); // il mange ce qu'il attrape
+  const good = score >= 5;
+  startAnim(good ? 'happy' : 'no', 2000, {}, false);
+  sfx(good ? 'win' : 'lose');
+  say(`${record ? '🏆 Nouveau record ! ' : ''}Score : ${score}${record || !best ? '' : ` (record : ${best})`}`, 4000);
+  save();
+  updateUI();
+}
+
+function startGame(id) {
+  if (id === 'back') return showMenu('#actions');
+  if (id === 'catch') return startCatch();
+  if (id === 'jump') return startJump();
+  showMenu('#gameMenu');
+  startAnim('game', 0, { round: 0, score: 0, shown: false });
+  say(`Manche 1/5 — devine où ${pet.name} va regarder !`, 4000);
 }
 
 function guess(dir) {
@@ -1234,6 +1443,7 @@ function tick() {
     deathShown = true;
     anim = null;
     battle = null;
+    minigame = null;
     showMenu('#actions');
     sfx('lose');
     $('#deathText').textContent = `${pet.name} est parti·e ${pet.cause}, à l'âge de ${formatAge(pet.diedAt - pet.born)}.`;
@@ -1246,10 +1456,43 @@ function tick() {
 /* --- Événements ------------------------------------------------- */
 document.querySelectorAll('[data-act]').forEach((b) =>
   b.addEventListener('click', () => { buzz(); sfx('tap'); actions[b.dataset.act](); save(); updateUI(); }));
-document.querySelectorAll('[data-food]').forEach((b) =>
-  b.addEventListener('click', () => { buzz(); sfx('tap'); feed(b.dataset.food); save(); updateUI(); }));
+document.querySelectorAll('[data-game]').forEach((b) =>
+  b.addEventListener('click', () => { buzz(); sfx('tap'); startGame(b.dataset.game); updateUI(); }));
 document.querySelectorAll('[data-guess]').forEach((b) =>
   b.addEventListener('click', () => guess(b.dataset.guess)));
+
+// Attrape-fruits : maintenir ◀ ▶ (ou toucher une moitié de l'écran) pour bouger
+function holdMove(dir) {
+  if (minigame?.type !== 'catch') return;
+  minigame.hold = dir;
+  if (dir) {
+    minigame.x = clamp(minigame.x + dir, 0, COLS - 7);
+    minigame.lastMove = Date.now();
+  }
+}
+for (const [id, dir] of [['#catchLeft', -1], ['#catchRight', 1]]) {
+  const b = $(id);
+  b.addEventListener('pointerdown', (e) => { e.preventDefault(); holdMove(dir); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => b.addEventListener(ev, () => holdMove(0)));
+}
+$('#jumpBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); minigame?.jump?.(); });
+canvas.addEventListener('pointerdown', (e) => {
+  if (minigame?.type === 'jump') minigame.jump();
+  if (minigame?.type === 'catch') {
+    const r = canvas.getBoundingClientRect();
+    holdMove(e.clientX - r.left < r.width / 2 ? -1 : 1);
+  }
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => canvas.addEventListener(ev, () => holdMove(0)));
+document.addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  if (e.key === 'ArrowLeft') holdMove(-1);
+  if (e.key === 'ArrowRight') holdMove(1);
+  if (e.key === ' ' || e.key === 'ArrowUp') { minigame?.jump?.(); if (battle) fire(); }
+});
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') holdMove(0);
+});
 $('#fireBtn').addEventListener('click', fire);
 $('#fleeBtn').addEventListener('click', () => battle && endBattle('flee'));
 $('#dexBtn').addEventListener('click', openDex);
@@ -1303,6 +1546,11 @@ setInterval(() => {
   if (battle) {
     updateBattle(now);
     if (battle) return drawBattle(now);
+  }
+  if (minigame) {
+    $('#screen').classList.remove('dark');
+    minigame.update();
+    if (minigame) return minigame.draw();
   }
   if (now - lastDraw >= 400) {
     lastDraw = now;

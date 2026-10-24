@@ -116,9 +116,16 @@ canvas { display: block; width: 100%; aspect-ratio: 32 / 24; image-rendering: pi
   gap: 8px;
   margin-top: auto;
 }
-#gameMenu { grid-template-columns: repeat(2, 1fr); }
+#gameMenu, #playMenu, #catchMenu { grid-template-columns: repeat(2, 1fr); }
+#jumpMenu { grid-template-columns: 1fr; }
 #battleMenu { grid-template-columns: 2fr 1fr; }
-#gameMenu button, #battleMenu button { padding: 16px 4px; font-size: .9rem; }
+#gameMenu button, #battleMenu button, #playMenu button { padding: 16px 4px; font-size: .85rem; }
+#catchMenu button, #jumpMenu button { padding: 22px 4px; font-size: .95rem; touch-action: none; }
+#jumpBtn { background: #ffd166; }
+.actions button { position: relative; touch-action: manipulation; }
+.actions button small { font-weight: 500; font-size: .6rem; opacity: .7; }
+.actions button .taste { position: absolute; top: 4px; right: 6px; font-style: normal; font-size: .8rem; }
+canvas { touch-action: none; }
 #fireBtn { background: #ffd166; }
 .hidden { display: none; }
 

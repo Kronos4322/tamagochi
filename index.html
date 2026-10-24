@@ -52,10 +52,22 @@
       <button data-act="light"><span id="lightIcon">💤</span><em id="lightLabel">Sieste</em></button>
     </nav>
 
-    <nav class="actions hidden" id="feedMenu">
-      <button data-food="meal"><span>🍚</span>Repas</button>
-      <button data-food="snack"><span>🍬</span>Friandise</button>
-      <button data-food="back"><span>↩</span>Retour</button>
+    <nav class="actions hidden" id="feedMenu"></nav>
+
+    <nav class="actions hidden" id="playMenu">
+      <button data-game="guess"><span>🎯</span>Gauche ou droite</button>
+      <button data-game="catch"><span>🍎</span><em id="bestCatch">Attrape-fruits</em></button>
+      <button data-game="jump"><span>🦘</span><em id="bestJump">Saut</em></button>
+      <button data-game="back"><span>↩</span>Retour</button>
+    </nav>
+
+    <nav class="actions hidden" id="catchMenu">
+      <button id="catchLeft"><span>◀</span>Gauche</button>
+      <button id="catchRight"><span>▶</span>Droite</button>
+    </nav>
+
+    <nav class="actions hidden" id="jumpMenu">
+      <button id="jumpBtn"><span>🦘</span>Sauter !</button>
     </nav>
 
     <nav class="actions hidden" id="gameMenu">

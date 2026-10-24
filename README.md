@@ -20,8 +20,11 @@ C'est une web-app installable (PWA) : elle s'ouvre dans le navigateur, s'ajoute 
 
   Une erreur de soin est comptée quand la faim tombe à zéro, quand l'hygiène devient critique ou quand il tombe malade.
 - **Actions**
-  - 🍙 **Nourrir** : repas (remplit la faim) ou friandise (rend joyeux, mais fait grossir)
-  - 🎾 **Jouer** : mini-jeu « gauche ou droite ? » en 5 manches
+  - 🍙 **Nourrir** : 🍚 Riz, 🍖 Viande, 🍎 Fruit (bon pour la santé), 🍬 Bonbon et 🍰 Gâteau (rendent joyeux mais font grossir). Chaque forme a un **plat préféré** ❤️ et un **plat détesté** 🤢, à découvrir. Les friandises passent même le ventre plein… mais gare à l'indigestion.
+  - 🎾 **Jouer** : 3 mini-jeux, avec meilleurs scores enregistrés
+    - 🎯 **Gauche ou droite** : devine où il va regarder (5 manches)
+    - 🍎 **Attrape-fruits** : 25 secondes pour attraper les fruits en évitant les cailloux (3 vies). Ce qu'il attrape le nourrit un peu.
+    - 🦘 **Saut** : saute par-dessus les rochers, de plus en plus vite. Tape sur le bouton ou sur l'écran.
   - ⚔️ **Combat** : appuie sur *Tirer !* quand la jauge est haute (tout en haut : coup critique). Les adversaires deviennent plus forts à chaque victoire. Une défaite peut blesser ton monstre.
   - 🛁 **Laver** : nettoie les crottes
   - 💊 **Soigner** : guérit quand une tête de mort apparaît

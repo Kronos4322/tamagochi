@@ -1,5 +1,5 @@
 // Service worker : cache hors-ligne + notifications en arrière-plan.
-const CACHE = 'tamagochi-v3';
+const CACHE = 'tamagochi-v4';
 const STATE_CACHE = 'tamagochi-state';
 const FILES = ['./', 'index.html', 'style.css', 'game.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 const HOUR = 3600e3;
