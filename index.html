@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#2a1f3d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tamagochi">
+  <title>Tamagochi</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="device">
+    <header class="top">
+      <div class="info">
+        <strong id="petName">—</strong>
+        <span id="petMeta"></span>
+      </div>
+      <button class="icon-btn" id="resetBtn" aria-label="Recommencer">↺</button>
+    </header>
+
+    <div class="shell">
+      <div class="screen" id="screen">
+        <canvas id="lcd" aria-label="Écran du Tamagochi"></canvas>
+      </div>
+      <p class="bubble" id="bubble" aria-live="polite"></p>
+    </div>
+
+    <section class="stats" id="stats">
+      <div class="stat" data-key="hunger"><span>🍙 Faim</span><i><b></b></i></div>
+      <div class="stat" data-key="happy"><span>💛 Joie</span><i><b></b></i></div>
+      <div class="stat" data-key="energy"><span>⚡ Énergie</span><i><b></b></i></div>
+      <div class="stat" data-key="clean"><span>🫧 Hygiène</span><i><b></b></i></div>
+      <div class="stat" data-key="health"><span>❤️ Santé</span><i><b></b></i></div>
+    </section>
+
+    <nav class="actions" id="actions">
+      <button data-act="feed"><span>🍙</span>Nourrir</button>
+      <button data-act="play"><span>🎾</span>Jouer</button>
+      <button data-act="wash"><span>🛁</span>Laver</button>
+      <button data-act="heal"><span>💊</span>Soigner</button>
+      <button data-act="light"><span id="lightIcon">💡</span><em id="lightLabel">Dormir</em></button>
+    </nav>
+
+    <nav class="actions hidden" id="feedMenu">
+      <button data-food="meal"><span>🍚</span>Repas</button>
+      <button data-food="snack"><span>🍬</span>Friandise</button>
+      <button data-food="back"><span>↩</span>Retour</button>
+    </nav>
+
+    <nav class="actions hidden" id="gameMenu">
+      <button data-guess="left"><span>⬅️</span>Gauche</button>
+      <button data-guess="right"><span>➡️</span>Droite</button>
+    </nav>
+  </main>
+
+  <dialog id="nameDialog">
+    <form method="dialog" id="nameForm">
+      <h2>🥚 Un nouvel œuf !</h2>
+      <p>Comment veux-tu l'appeler ?</p>
+      <input id="nameInput" maxlength="12" autocomplete="off" placeholder="Pixel" required>
+      <button type="submit">Adopter</button>
+    </form>
+  </dialog>
+
+  <dialog id="deathDialog">
+    <form method="dialog">
+      <h2>👻 Repose en paix</h2>
+      <p id="deathText"></p>
+      <button type="submit">Nouvel œuf</button>
+    </form>
+  </dialog>
+
+  <script src="game.js"></script>
+</body>
+</html>
