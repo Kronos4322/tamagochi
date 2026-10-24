@@ -7,13 +7,16 @@
 
 const SAVE_KEY = 'tamagochi-save-v1';
 const DEX_KEY = 'tamagochi-dex-v1';
+const PREFS_KEY = 'tamagochi-prefs-v1';
+const STATE_CACHE = 'tamagochi-state';
 const COLS = 32, ROWS = 24;
 const MIN = 60e3, HOUR = 60 * MIN;
 const MAX_OFFLINE = 14 * 24 * HOUR;
 
 /* --- Sprites ---------------------------------------------------
-   '#' toujours allumé · 'e' œil ouvert (masqué en dormant)
-   'E' bas de l'œil (toujours) · 'm' sourire · 's' bouche triste  */
+   '#' contour · 'e' œil ouvert (fermé en dormant) · 'E' bas de l'œil
+   'm' sourire · 's' bouche triste · 'c' joue
+   L'intérieur des formes fermées est rempli et ombré automatiquement. */
 const SPRITES = {
   egg: [
     '....####....',
@@ -53,7 +56,7 @@ const SPRITES = {
     '.#........#.',
     '#..e....e..#',
     '#..E....E..#',
-    '#..........#',
+    '#.c......c.#',
     '#..mssssm..#',
     '.#.smmmms.#.',
     '..##....##..',
@@ -66,7 +69,7 @@ const SPRITES = {
     '#............#',
     '#...e....e...#',
     '#...E....E...#',
-    '#............#',
+    '#..c......c..#',
     '#....mssm....#',
     '#....smms....#',
     '.#..........#.',
@@ -77,7 +80,7 @@ const SPRITES = {
   grumo: [
     '#............#',
     '##..........##',
-    '.##.######.##.',
+    '.############.',
     '..#........#..',
     '.#..........#.',
     '#..ee....ee..#',
@@ -98,7 +101,7 @@ const SPRITES = {
     '..#..........#..',
     '..#..e....e..#..',
     '..#..E....E..#..',
-    '#.#..........#.#',
+    '#.#.c......c.#.#',
     '.##...mssm...##.',
     '..#...smms...#..',
     '..#..........#..',
@@ -114,7 +117,7 @@ const SPRITES = {
     '....#......#....',
     '#..#.e....e.#..#',
     '##.#.E....E.#.##',
-    '#.##........##.#',
+    '#.##c......c##.#',
     '#..#..mssm..#..#',
     '.#.#..smms..#.#.',
     '..##........##..',
@@ -132,7 +135,7 @@ const SPRITES = {
     '.#...e....e...#.',
     '.#...E....E...#.',
     '#..............#',
-    '#..##......##..#',
+    '#..cc......cc..#',
     '#.....mssm.....#',
     '#.....smms.....#',
     '#..............#',
@@ -154,9 +157,9 @@ const SPRITES = {
     '.#...#....#...#.',
     '..#...####...#..',
     '...#........#...',
-    '..#.#......#.#..',
-    '.#...#....#...#.',
-    '#.....####.....#',
+    '..#.########.#..',
+    '.#..#......#..#.',
+    '#..##......##..#',
   ],
   gluon: [
     '.....##.....',
@@ -204,10 +207,10 @@ const SPRITES = {
     '#.##.##.##.#',
     '##..#..#..##',
   ],
-  poop: ['..#....', '.###...', '..###..', '.#####.', '#######'],
-  meal: ['..###..', '.#####.', '#######', '.......', '#######', '.#####.'],
-  snack: ['#.###.#', '.#####.', '#######', '.#####.', '#.###.#'],
-  heart: ['.##.##.', '#######', '#######', '.#####.', '..###..', '...#...'],
+  poop: ['..#....', '.#.#...', '..#.#..', '.#...#.', '#######'],
+  meal: ['..###..', '.#...#.', '#.....#', '#######', '#.....#', '.#####.'],
+  snack: ['#.###.#', '.#...#.', '#.....#', '.#...#.', '#.###.#'],
+  heart: ['.##.##.', '#..#..#', '#.....#', '.#...#.', '..#.#..', '...#...'],
   skull: ['.###.', '#.#.#', '#####', '.###.', '.#.#.'],
   sparkle: ['..#..', '..#..', '##.##', '..#..', '..#..'],
   z: ['####', '..#.', '.#..', '####'],
@@ -216,7 +219,7 @@ const SPRITES = {
   arrowL: ['..#..', '.#...', '#####', '.#...', '..#..'],
   arrowR: ['..#..', '...#.', '#####', '...#.', '..#..'],
   ball: ['.###.', '#.###', '##.##', '###.#', '.###.'],
-  shot: ['.#.', '###', '.#.'],
+  shot: ['.#.', '#.#', '.#.'],
 };
 
 /* --- Monstres : formes du joueur et adversaires ------------------ */
@@ -242,6 +245,12 @@ const STAGES = [
   { id: 'adult', label: 'Adulte', until: Infinity },
 ];
 
+// Heure du coucher selon l'âge, réveil à 8 h (horloge du téléphone)
+const BEDTIME = { baby: 20, child: 21, adult: 22 };
+const WAKE_HOUR = 8;
+
+const SHELLS = ['rose', 'bleu', 'menthe', 'soleil', 'nuit', 'cristal'];
+
 /* --- Utilitaires ------------------------------------------------ */
 const $ = (sel) => document.querySelector(sel);
 const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v));
@@ -253,6 +262,11 @@ function stageOf(s, now = Date.now()) {
   return STAGES.find((st) => age < st.until);
 }
 
+function isNight(stageId, t) {
+  const h = new Date(t).getHours();
+  return h >= BEDTIME[stageId] || h < WAKE_HOUR;
+}
+
 function formatAge(ms) {
   const d = Math.floor(ms / (24 * HOUR));
   const h = Math.floor((ms % (24 * HOUR)) / HOUR);
@@ -260,6 +274,65 @@ function formatAge(ms) {
   if (d) return `${d} j ${h} h`;
   if (h) return `${h} h ${m} min`;
   return `${m} min`;
+}
+
+/* --- Préférences (son, coque, notifications) -------------------- */
+const prefs = (() => {
+  try {
+    return { sound: true, shell: 'rose', notify: false, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') };
+  } catch {
+    return { sound: true, shell: 'rose', notify: false };
+  }
+})();
+
+function savePrefs() {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch { /* stockage indisponible */ }
+}
+
+/* --- Sons 8 bits (Web Audio) ------------------------------------ */
+const SFX = {
+  tap: [[1200, 0.03]],
+  eat: [[523, 0.08], [0, 0.04], [523, 0.08], [0, 0.04], [659, 0.12]],
+  happy: [[659, 0.08], [784, 0.08], [1047, 0.16]],
+  no: [[220, 0.12], [0, 0.04], [196, 0.2]],
+  wash: [[1047, 0.05], [1319, 0.05], [1568, 0.05], [2093, 0.1]],
+  heal: [[784, 0.1], [988, 0.1], [1175, 0.18]],
+  evolve: [[523, 0.07], [659, 0.07], [784, 0.07], [1047, 0.07], [784, 0.07], [1047, 0.07], [1319, 0.3]],
+  fire: [[1400, 0.04], [1000, 0.04], [700, 0.06]],
+  hit: [[180, 0.05], [120, 0.12]],
+  crit: [[1568, 0.05], [180, 0.06], [100, 0.16]],
+  miss: [[500, 0.06], [350, 0.1]],
+  win: [[523, 0.1], [659, 0.1], [784, 0.1], [1047, 0.3]],
+  lose: [[392, 0.16], [330, 0.16], [262, 0.34]],
+  alert: [[1568, 0.06], [0, 0.06], [1568, 0.06]],
+  night: [[784, 0.14], [659, 0.14], [523, 0.24]],
+  morning: [[523, 0.1], [659, 0.1], [784, 0.2]],
+};
+let audio = null;
+
+function sfx(name) {
+  if (!prefs.sound) return;
+  try {
+    audio ||= new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+  } catch {
+    return;
+  }
+  let t = audio.currentTime + 0.01;
+  for (const [freq, dur] of SFX[name]) {
+    if (freq) {
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.05, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(gain).connect(audio.destination);
+      osc.start(t);
+      osc.stop(t + dur);
+    }
+    t += dur;
+  }
 }
 
 /* --- État du jeu ------------------------------------------------ */
@@ -283,6 +356,10 @@ function newPet(name) {
     poops: 0,
     sick: false,
     asleep: false,
+    night: false,
+    lightsOn: true,
+    bedAt: 0,
+    lightMistake: false,
     nextPoop: now + rand(2, 4) * HOUR,
     mistakes: 0,
     wins: 0,
@@ -297,16 +374,25 @@ function newPet(name) {
 function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    // Les anciennes sauvegardes n'ont pas les champs « Digimon »
-    return raw ? { mistakes: 0, wins: 0, losses: 0, form: null, formStage: null, ...JSON.parse(raw) } : null;
+    // Les anciennes sauvegardes n'ont pas tous les champs
+    const defaults = { mistakes: 0, wins: 0, losses: 0, form: null, formStage: null, night: false, lightsOn: true, bedAt: 0, lightMistake: false };
+    return raw ? { ...defaults, ...JSON.parse(raw) } : null;
   } catch {
     return null;
   }
 }
 
-function save() {
+let lastSnapshot = 0;
+function save(force = false) {
   if (!pet) return;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(pet)); } catch { /* stockage indisponible */ }
+  // Copie lisible par le service worker (pour les notifications)
+  if ((force || Date.now() - lastSnapshot > MIN) && 'caches' in window) {
+    lastSnapshot = Date.now();
+    caches.open(STATE_CACHE)
+      .then((c) => c.put('state.json', new Response(JSON.stringify(pet))))
+      .catch(() => {});
+  }
 }
 
 function loadDex() {
@@ -323,17 +409,32 @@ function saveDex() {
 
 /* --- Simulation (rattrape aussi le temps passé hors-ligne) ------ */
 function step(s, t, dt) {
-  if (!s.alive || stageOf(s, t).id === 'egg') return;
+  const stageId = stageOf(s, t).id;
+  if (!s.alive || stageId === 'egg') return;
   const h = dt / HOUR;
-  const slow = s.asleep ? 0.35 : 1;
   const before = { hunger: s.hunger, clean: s.clean, sick: s.sick };
 
+  // Jour / nuit sur la vraie horloge
+  const night = isNight(stageId, t);
+  if (night && !s.night) {
+    Object.assign(s, { night: true, asleep: true, lightsOn: true, bedAt: t, lightMistake: false });
+  } else if (!night && s.night) {
+    Object.assign(s, { night: false, asleep: false, lightsOn: true });
+  }
+  if (s.night && s.lightsOn && !s.lightMistake && t - s.bedAt > 30 * MIN) {
+    s.lightMistake = true;
+    s.mistakes++;
+  }
+
+  const slow = s.asleep ? 0.35 : 1;
+  const badSleep = s.asleep && s.lightsOn && s.night; // dormir avec la lumière, c'est mal dormir
   s.hunger = clamp(s.hunger - 5 * h * slow);
-  s.happy = clamp(s.happy - 4 * h * slow);
-  s.energy = clamp(s.asleep ? s.energy + 15 * h : s.energy - 4 * h);
+  s.happy = clamp(s.happy - (badSleep ? 6 : 4 * slow) * h);
+  s.energy = clamp(s.asleep ? s.energy + (badSleep ? 6 : 15) * h : s.energy - 4 * h);
   s.clean = clamp(s.clean - (1.5 + s.poops * 4) * h);
 
   if (!s.asleep && s.energy <= 0) s.asleep = true;
+  if (s.asleep && !s.night && s.energy >= 100) Object.assign(s, { asleep: false, lightsOn: true });
 
   if (t >= s.nextPoop) {
     s.poops = Math.min(s.poops + 1, 4);
@@ -373,6 +474,10 @@ function simulate(s, now) {
   s.last = now;
 }
 
+function needsCare(s) {
+  return s.hunger < 25 || s.happy < 25 || s.clean < 30 || s.sick || s.poops > 0 || (s.night && s.lightsOn);
+}
+
 /* --- Évolution à branches --------------------------------------- */
 function chooseForm(s, stageId) {
   if (stageId === 'baby') return 'bulle';
@@ -410,7 +515,10 @@ function petPower() {
 /* --- Rendu LCD -------------------------------------------------- */
 const canvas = $('#lcd');
 const ctx = canvas.getContext('2d');
-const INK = '#1d2b1a';
+const INK = '29,43,26';
+const INK_DARK = '159,176,138';
+// Opacité de chaque type de pixel : contour, joue, ombre, remplissage, reflet
+const TONES = { '#': 1, E: 1, c: 0.55, d: 0.42, f: 0.24, h: 0.08 };
 let P = 10;
 let frame = 0;
 let petX = 10;
@@ -424,38 +532,102 @@ function resize() {
   canvas.height = P * ROWS;
 }
 
-function px(x, y, on) {
+function px(x, y, ink, a = 1) {
   if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return;
-  ctx.fillStyle = on;
+  ctx.fillStyle = `rgba(${ink},${a})`;
   const g = Math.max(1, Math.round(P * 0.1));
   ctx.fillRect(x * P + g, y * P + g, P - g, P - g);
 }
 
-function blit(sprite, x, y, ink, opts = {}) {
-  sprite.forEach((row, j) => {
-    [...row].forEach((ch, i) => {
-      let on = false;
-      if (ch === '#' || ch === 'E') on = true;
-      else if (ch === 'e') on = !opts.closed;
-      else if (ch === 'm') on = !opts.sad;
-      else if (ch === 's') on = !!opts.sad;
-      if (on) px(x + (opts.flip ? row.length - 1 - i : i), y + j, ink);
-    });
-  });
+// Ombre portée des pixels, comme sur un vrai écran LCD
+function shadowPx(x, y, ink) {
+  if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return;
+  ctx.fillStyle = `rgba(${ink},.13)`;
+  const g = Math.max(1, Math.round(P * 0.1));
+  ctx.fillRect(x * P + g * 3, y * P + g * 3, P - g, P - g);
 }
 
-function clearLCD(ghostInk) {
+// Analyse d'un sprite : trouve l'intérieur des formes fermées et choisit
+// pour chaque pixel s'il est rempli, ombré (bas / bord droit) ou en reflet.
+const analyzed = new Map();
+function analyze(sprite) {
+  if (analyzed.has(sprite)) return analyzed.get(sprite);
+  const H = sprite.length, W = Math.max(...sprite.map((r) => r.length));
+  const at = (x, y) => sprite[y]?.[x] ?? '.';
+  const outside = new Set();
+  const queue = [];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if ((x === 0 || y === 0 || x === W - 1 || y === H - 1) && at(x, y) === '.') {
+        outside.add(y * W + x);
+        queue.push([x, y]);
+      }
+    }
+  }
+  while (queue.length) {
+    const [x, y] = queue.pop();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, k = ny * W + nx;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H || outside.has(k) || at(nx, ny) !== '.') continue;
+      outside.add(k);
+      queue.push([nx, ny]);
+    }
+  }
+
+  let top = H, bottom = 0, left = W, right = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (at(x, y) === '.' && !outside.has(y * W + x)) {
+        top = Math.min(top, y); bottom = Math.max(bottom, y);
+        left = Math.min(left, x); right = Math.max(right, x);
+      }
+    }
+  }
+
+  const cells = [];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const ch = at(x, y);
+      if (ch !== '.') { cells.push([x, y, ch]); continue; }
+      if (outside.has(y * W + x)) continue;
+      const ry = (y - top) / (bottom - top || 1);
+      const rx = (x - left) / (right - left || 1);
+      const shine = at(x, y - 1) === '#' && ry < 0.4 && rx < 0.5;
+      const shade = ry > 0.7 || at(x + 1, y) === '#';
+      cells.push([x, y, shine ? 'h' : shade ? 'd' : 'f']);
+    }
+  }
+  const result = { W, cells };
+  analyzed.set(sprite, result);
+  return result;
+}
+
+function blit(sprite, x, y, ink, opts = {}) {
+  const { W, cells } = analyze(sprite);
+  const pixels = cells.map(([cx, cy, k]) => {
+    let a;
+    if (k === 'e') a = opts.closed ? TONES.f : 1;
+    else if (k === 'm') a = opts.sad ? TONES.f : 1;
+    else if (k === 's') a = opts.sad ? 1 : TONES.f;
+    else a = TONES[k];
+    return [x + (opts.flip ? W - 1 - cx : cx), y + cy, a];
+  });
+  for (const [X, Y, a] of pixels) if (a === 1) shadowPx(X, Y, ink);
+  for (const [X, Y, a] of pixels) px(X, Y, ink, a);
+}
+
+function clearLCD(ink, a) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) px(x, y, ghostInk);
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) px(x, y, ink, a);
 }
 
 function draw() {
   frame++;
   const now = Date.now();
-  const dark = pet?.asleep && pet.alive;
-  const ink = dark ? '#9fb08a' : INK;
+  const dark = pet?.alive && pet.asleep && !pet.lightsOn;
+  const ink = dark ? INK_DARK : INK;
   $('#screen').classList.toggle('dark', !!dark);
-  clearLCD(dark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.06)');
+  clearLCD(dark ? '255,255,255' : INK, dark ? 0.04 : 0.06);
   if (!pet) return;
 
   if (!pet.alive) {
@@ -490,8 +662,9 @@ function draw() {
   if (!pet.asleep && frame % 2) y -= 1; // rebond
 
   const flip = anim?.type === 'game' && anim.data.shown ? anim.data.dir === 'left' : facing < 0;
+  const blinking = frame % 11 === 0;
   const evolving = anim?.type === 'evolve' && frame % 2;
-  if (!evolving) blit(sprite, x, y, ink, { closed: pet.asleep, sad, flip });
+  if (!evolving) blit(sprite, x, y, ink, { closed: pet.asleep || blinking, sad, flip });
 
   // Crottes
   for (let i = 0; i < Math.min(pet.poops, 2); i++) blit(SPRITES.poop, COLS - 8, ROWS - 6 - i * 6, ink);
@@ -503,8 +676,7 @@ function draw() {
     blit(SPRITES.z, x + w, zy, ink);
   }
 
-  const needsCare = pet.hunger < 25 || pet.happy < 25 || pet.clean < 30 || pet.sick || pet.poops > 0;
-  if (needsCare && frame % 4 < 2) blit(SPRITES.alert, COLS - 2, 1, ink);
+  if (needsCare(pet) && frame % 4 < 2) blit(SPRITES.alert, COLS - 2, 1, ink);
 
   drawAnim(x, y, w, ink, now);
 }
@@ -518,7 +690,7 @@ function drawAnim(x, y, w, ink, now) {
     case 'snack': {
       const food = SPRITES[anim.type];
       const bites = Math.max(0, food.length - (4 - t) * 2);
-      blit(food.slice(0, bites), x + w + 1, y + 3, ink);
+      if (bites) blit(food.slice(0, bites), x + w + 1, y + 3, ink);
       break;
     }
     case 'happy':
@@ -583,10 +755,12 @@ function startBattle() {
     t0: Date.now(),
     dmg: 0,
     hitMe: false,
+    landed: false,
   };
   anim = null;
   showMenu('#battleMenu');
   say(`${battle.foe.name} (niv. ${lvl}) te défie ! ⚔️`, 2500);
+  sfx('alert');
   buzz(80);
 }
 
@@ -600,6 +774,7 @@ function fire() {
   const v = gaugeValue(b, Date.now());
   b.dmg = v >= 0.92 ? 2 : v >= b.threshold ? 1 : 0;
   say(b.dmg === 2 ? 'Coup critique ! 💥' : b.dmg ? 'Touché !' : 'Raté…', 1500);
+  sfx('fire');
   buzz(b.dmg ? 50 : 15);
   setPhase('fire');
 }
@@ -607,12 +782,21 @@ function fire() {
 function setPhase(phase) {
   battle.phase = phase;
   battle.t0 = Date.now();
+  battle.landed = false;
 }
 
 function updateBattle(now) {
   const b = battle;
   if (!pet.alive) return endBattle('flee');
   const el = now - b.t0;
+
+  // Son à l'arrivée du projectile
+  if (!b.landed && el >= 450 && (b.phase === 'impact' || b.phase === 'defend')) {
+    b.landed = true;
+    if (b.phase === 'impact') sfx(b.dmg === 2 ? 'crit' : b.dmg ? 'hit' : 'miss');
+    else sfx(b.hitMe ? 'hit' : 'miss');
+  }
+
   if (b.phase === 'aim' || el < PHASE_MS[b.phase]) return;
 
   switch (b.phase) {
@@ -628,10 +812,12 @@ function updateBattle(now) {
       if (b.foeHp <= 0) {
         setPhase('win');
         say(`${b.foe.name} est K.O. ! 🏆`, 2500);
+        sfx('win');
         buzz(200);
       } else {
         b.hitMe = Math.random() < b.foeHit;
         setPhase('counter');
+        sfx('fire');
       }
       break;
     case 'counter':
@@ -641,8 +827,12 @@ function updateBattle(now) {
       if (b.hitMe) b.me--;
       say(b.hitMe ? 'Aïe !' : 'Esquivé !', 1200);
       if (b.hitMe) buzz(60);
-      if (b.me <= 0) setPhase('lose');
-      else setPhase('aim');
+      if (b.me <= 0) {
+        setPhase('lose');
+        sfx('lose');
+      } else {
+        setPhase('aim');
+      }
       break;
     case 'win':
     case 'lose':
@@ -664,13 +854,13 @@ function endBattle(result) {
     pet.weight = Math.max(1, pet.weight - 2);
     dex.foes[foeId] = (dex.foes[foeId] || 0) + 1;
     saveDex();
-    startAnim('happy', 2000);
+    startAnim('happy', 2000, {}, false);
     say(`Victoire contre ${foe.name} ! (${pet.wins} au total)`, 3000);
   } else if (result === 'lose') {
     pet.losses++;
     pet.health = clamp(pet.health - 20);
     pet.happy = clamp(pet.happy - 10);
-    startAnim('no');
+    startAnim('no', 1600, {}, false);
     if (Math.random() < 0.35) {
       pet.sick = true;
       say(`${pet.name} est blessé·e… soigne-le vite 💊`, 3500);
@@ -693,8 +883,8 @@ function drawShot(fromX, toX, y, el, dur, miss) {
 function drawPips(n, max, right) {
   for (let i = 0; i < max; i++) {
     const x = right ? COLS - 3 - i * 3 : 1 + i * 3;
-    if (i < n) { px(x, 1, INK); px(x + 1, 1, INK); px(x, 2, INK); px(x + 1, 2, INK); }
-    else px(x, 2, INK);
+    const a = i < n ? 1 : 0.2;
+    px(x, 1, INK, a); px(x + 1, 1, INK, a); px(x, 2, INK, a); px(x + 1, 2, INK, a);
   }
 }
 
@@ -704,7 +894,9 @@ function drawGauge(b, now) {
   for (let i = 0; i < H; i++) {
     px(27, top + i, INK);
     px(30, top + i, INK);
-    if (H - i <= level) { px(28, top + i, INK); px(29, top + i, INK); }
+    const filled = H - i <= level;
+    px(28, top + i, INK, filled ? 1 : 0.12);
+    px(29, top + i, INK, filled ? 1 : 0.12);
   }
   px(25, top + H - Math.round(b.threshold * H), INK);
   px(25, top + H - Math.round(0.92 * H), INK);
@@ -716,7 +908,7 @@ function drawBattle(now) {
   const el = now - b.t0;
   const blink = Math.floor(now / 120) % 2;
   $('#screen').classList.remove('dark');
-  clearLCD('rgba(0,0,0,.06)');
+  clearLCD(INK, 0.06);
 
   if (SCENE_B.includes(b.phase)) {
     const sprite = SPRITES[b.foe.sprite];
@@ -761,6 +953,11 @@ function say(text, ms = 2500) {
   bubbleTimer = setTimeout(() => (el.textContent = ''), ms);
 }
 
+function lightButton() {
+  if (pet.night) return pet.lightsOn ? ['🌙', 'Éteindre'] : ['💡', 'Allumer'];
+  return pet.asleep ? ['☀️', 'Réveiller'] : ['💤', 'Sieste'];
+}
+
 function updateUI() {
   if (!pet) return;
   const now = Date.now();
@@ -771,7 +968,9 @@ function updateUI() {
   $('#petMeta').textContent = pet.alive
     ? `${form ? `${form.name} (${stage.label})` : stage.label} · ${formatAge(age)} · ${Math.round(pet.weight)} g`
     : `Parti(e) à ${formatAge(age)}`;
-  $('#record').textContent = `⚔️ ${pet.wins} V · ${pet.losses} D   ·   ⚠️ ${pet.mistakes} erreur${pet.mistakes > 1 ? 's' : ''} de soin`;
+  const clock = new Date(now).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const sky = stage.id !== 'egg' && isNight(stage.id, now) ? '🌙' : '☀️';
+  $('#record').textContent = `${sky} ${clock}   ·   ⚔️ ${pet.wins} V · ${pet.losses} D   ·   ⚠️ ${pet.mistakes}`;
 
   document.querySelectorAll('.stat').forEach((el) => {
     const v = pet[el.dataset.key];
@@ -785,8 +984,9 @@ function updateUI() {
   document.querySelectorAll('#actions button').forEach((b) => {
     b.disabled = !pet.alive || isEgg || busy || (pet.asleep && b.dataset.act !== 'light');
   });
-  $('#lightIcon').textContent = pet.asleep ? '☀️' : '💡';
-  $('#lightLabel').textContent = pet.asleep ? 'Réveiller' : 'Dormir';
+  const [icon, label] = lightButton();
+  $('#lightIcon').textContent = icon;
+  $('#lightLabel').textContent = label;
 
   const title = (pet.alive && (pet.hunger < 25 || pet.sick || pet.poops > 1)) ? '(!) Tamagochi' : 'Tamagochi';
   if (document.title !== title) document.title = title;
@@ -796,8 +996,10 @@ function showMenu(id) {
   ['#actions', '#feedMenu', '#gameMenu', '#battleMenu'].forEach((m) => $(m).classList.toggle('hidden', m !== id));
 }
 
-function startAnim(type, ms = 1600, data = {}) {
+const ANIM_SFX = { meal: 'eat', snack: 'eat', happy: 'happy', no: 'no', wash: 'wash', heal: 'heal', evolve: 'evolve' };
+function startAnim(type, ms = 1600, data = {}, sound = true) {
   anim = { type, until: Date.now() + ms, data };
+  if (sound && ANIM_SFX[type]) sfx(ANIM_SFX[type]);
 }
 
 /* --- Actions ---------------------------------------------------- */
@@ -833,8 +1035,14 @@ const actions = {
     say('Beurk… mais ça va mieux !');
   },
   light() {
+    if (pet.night) {
+      pet.lightsOn = !pet.lightsOn;
+      say(pet.lightsOn ? 'Lumière allumée… il fait encore nuit !' : 'Bonne nuit… 💤');
+      return;
+    }
     pet.asleep = !pet.asleep;
-    say(pet.asleep ? 'Bonne nuit… 💤' : 'Debout !');
+    pet.lightsOn = !pet.asleep;
+    say(pet.asleep ? 'Petite sieste… 💤' : 'Debout !');
   },
 };
 
@@ -868,6 +1076,7 @@ function guess(dir) {
   g.round++;
   if (g.win) g.score++;
   say(g.win ? 'Gagné ! 🎉' : 'Raté…', 1200);
+  sfx(g.win ? 'happy' : 'miss');
   buzz(g.win ? 60 : 20);
 
   setTimeout(() => {
@@ -889,16 +1098,17 @@ function guess(dir) {
 }
 
 /* --- Digidex ---------------------------------------------------- */
-function spriteCanvas(sprite, color) {
+function spriteCanvas(sprite, known) {
   const c = document.createElement('canvas');
   const s = 4, n = 16;
   c.width = c.height = n * s;
   const g = c.getContext('2d');
-  g.fillStyle = color;
   const ox = Math.floor((n - sprite[0].length) / 2), oy = Math.floor((n - sprite.length) / 2);
-  sprite.forEach((row, j) => [...row].forEach((ch, i) => {
-    if ('#Eem'.includes(ch)) g.fillRect((ox + i) * s, (oy + j) * s, s - 1, s - 1);
-  }));
+  for (const [x, y, k] of analyze(sprite).cells) {
+    const a = known ? (TONES[k] ?? (k === 's' ? TONES.f : 1)) : 0.18;
+    g.fillStyle = `rgba(${INK},${a})`;
+    g.fillRect((ox + x) * s, (oy + y) * s, s - 1, s - 1);
+  }
   return c;
 }
 
@@ -906,7 +1116,7 @@ function dexCard(id, known, sub) {
   const m = MONSTERS[id];
   const card = document.createElement('div');
   card.className = `card${known ? '' : ' unknown'}`;
-  card.append(spriteCanvas(SPRITES[m.sprite], known ? INK : 'rgba(29,43,26,.18)'));
+  card.append(spriteCanvas(SPRITES[m.sprite], known));
   const name = document.createElement('strong');
   name.textContent = known ? m.name : '???';
   const small = document.createElement('small');
@@ -916,13 +1126,61 @@ function dexCard(id, known, sub) {
 }
 
 function openDex() {
-  const forms = $('#dexForms'), foes = $('#dexFoes');
-  forms.replaceChildren(...FORM_IDS.map((id) =>
+  $('#dexForms').replaceChildren(...FORM_IDS.map((id) =>
     dexCard(id, !!dex.forms[id], dex.forms[id] ? MONSTERS[id].stage : MONSTERS[id].hint)));
-  foes.replaceChildren(...[...new Set(ENEMY_IDS)].map((id) =>
+  $('#dexFoes').replaceChildren(...ENEMY_IDS.map((id) =>
     dexCard(id, !!dex.foes[id], dex.foes[id] ? `Vaincu ×${dex.foes[id]}` : 'Jamais vaincu')));
   $('#dexCount').textContent = `${FORM_IDS.filter((id) => dex.forms[id]).length}/${FORM_IDS.length}`;
   $('#dexDialog').showModal();
+}
+
+/* --- Réglages : coque, son, notifications ----------------------- */
+function applyShell() {
+  document.documentElement.dataset.shell = prefs.shell;
+  document.querySelectorAll('[data-shell-pick]').forEach((b) =>
+    b.classList.toggle('picked', b.dataset.shellPick === prefs.shell));
+}
+
+function notifSupport() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return 'none';
+  return Notification.permission;
+}
+
+function updateNotifUI() {
+  const btn = $('#notifBtn'), note = $('#notifNote');
+  const state = notifSupport();
+  btn.disabled = state === 'none' || state === 'denied' || (prefs.notify && state === 'granted');
+  btn.textContent = prefs.notify && state === 'granted' ? '🔔 Notifications activées' : '🔔 Activer les notifications';
+  note.textContent =
+    state === 'none' ? "Ce navigateur ne gère pas les notifications. Sur iPhone, ajoute d'abord l'appli à l'écran d'accueil." :
+    state === 'denied' ? 'Notifications bloquées : autorise-les dans les réglages du navigateur.' :
+    'Prévient quand ton monstre a besoin de toi. Fonctionne surtout sur Android avec l’appli installée.';
+}
+
+async function enableNotifications() {
+  if (notifSupport() === 'none') return updateNotifUI();
+  const perm = await Notification.requestPermission();
+  prefs.notify = perm === 'granted';
+  savePrefs();
+  updateNotifUI();
+  if (!prefs.notify) return;
+  const reg = await navigator.serviceWorker.ready;
+  try {
+    // Vérification périodique en arrière-plan (Chrome Android, appli installée)
+    if ('periodicSync' in reg) await reg.periodicSync.register('tamagochi-check', { minInterval: HOUR });
+  } catch { /* non autorisé par le navigateur */ }
+  save(true);
+  reg.showNotification('Tamagochi', { body: 'Notifications activées 🔔', icon: 'icons/icon-192.png', tag: 'tamagochi' });
+}
+
+let lastNotify = 0;
+async function notifyIfNeeded() {
+  // Appli en arrière-plan mais encore active : on prévient directement
+  if (!prefs.notify || !document.hidden || !pet?.alive || Notification.permission !== 'granted') return;
+  if (!needsCare(pet) || Date.now() - lastNotify < 2 * HOUR) return;
+  lastNotify = Date.now();
+  const reg = await navigator.serviceWorker.ready;
+  reg.showNotification(`${pet.name} a besoin de toi !`, { body: 'Viens voir ce qui se passe 👀', icon: 'icons/icon-192.png', tag: 'tamagochi' });
 }
 
 /* --- Cycle de vie ----------------------------------------------- */
@@ -939,7 +1197,7 @@ $('#nameForm').addEventListener('submit', () => {
   anim = null;
   battle = null;
   showMenu('#actions');
-  save();
+  save(true);
   say(`L'œuf va bientôt éclore…`, 4000);
 });
 
@@ -948,16 +1206,36 @@ $('#deathDialog').addEventListener('cancel', (e) => e.preventDefault());
 $('#deathDialog').addEventListener('close', askName);
 
 let deathShown = false;
+let wasNight = null;
+let neededCare = false;
 
 function tick() {
   if (!pet) return;
   simulate(pet, Date.now());
   evolve();
 
+  if (wasNight !== null && pet.alive && pet.night !== wasNight) {
+    if (pet.night) {
+      say(`🌙 ${pet.name} s'endort… éteins la lumière !`, 5000);
+      sfx('night');
+    } else {
+      say(`☀️ Bonjour ! ${pet.name} se réveille.`, 4000);
+      sfx('morning');
+    }
+  }
+  wasNight = pet.night;
+
+  const care = pet.alive && needsCare(pet);
+  if (care && !neededCare && !document.hidden && !battle) sfx('alert');
+  neededCare = care;
+  notifyIfNeeded();
+
   if (!pet.alive && !deathShown) {
     deathShown = true;
     anim = null;
+    battle = null;
     showMenu('#actions');
+    sfx('lose');
     $('#deathText').textContent = `${pet.name} est parti·e ${pet.cause}, à l'âge de ${formatAge(pet.diedAt - pet.born)}.`;
     setTimeout(() => $('#deathDialog').showModal(), 1500);
   }
@@ -967,30 +1245,47 @@ function tick() {
 
 /* --- Événements ------------------------------------------------- */
 document.querySelectorAll('[data-act]').forEach((b) =>
-  b.addEventListener('click', () => { buzz(); actions[b.dataset.act](); save(); updateUI(); }));
+  b.addEventListener('click', () => { buzz(); sfx('tap'); actions[b.dataset.act](); save(); updateUI(); }));
 document.querySelectorAll('[data-food]').forEach((b) =>
-  b.addEventListener('click', () => { buzz(); feed(b.dataset.food); save(); updateUI(); }));
+  b.addEventListener('click', () => { buzz(); sfx('tap'); feed(b.dataset.food); save(); updateUI(); }));
 document.querySelectorAll('[data-guess]').forEach((b) =>
   b.addEventListener('click', () => guess(b.dataset.guess)));
 $('#fireBtn').addEventListener('click', fire);
 $('#fleeBtn').addEventListener('click', () => battle && endBattle('flee'));
 $('#dexBtn').addEventListener('click', openDex);
 
+$('#settingsBtn').addEventListener('click', () => {
+  $('#soundToggle').checked = prefs.sound;
+  updateNotifUI();
+  $('#settingsDialog').showModal();
+});
+document.querySelectorAll('[data-shell-pick]').forEach((b) =>
+  b.addEventListener('click', () => { prefs.shell = b.dataset.shellPick; savePrefs(); applyShell(); sfx('tap'); }));
+$('#soundToggle').addEventListener('change', (e) => {
+  prefs.sound = e.target.checked;
+  savePrefs();
+  sfx('happy');
+});
+$('#notifBtn').addEventListener('click', enableNotifications);
+
 $('#resetBtn').addEventListener('click', () => {
   if (!confirm('Abandonner ton Tamagochi et recommencer avec un nouvel œuf ? (Le Digidex est conservé.)')) return;
   localStorage.removeItem(SAVE_KEY);
   pet = null;
   battle = null;
+  wasNight = null;
+  $('#settingsDialog').close();
   askName();
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) save(); else tick();
+  if (document.hidden) save(true); else tick();
 });
-window.addEventListener('pagehide', save);
+window.addEventListener('pagehide', () => save(true));
 window.addEventListener('resize', resize);
 
 /* --- Démarrage -------------------------------------------------- */
+applyShell();
 resize();
 pet = load();
 if (pet) {

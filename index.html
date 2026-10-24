@@ -23,7 +23,7 @@
       </div>
       <div class="top-btns">
         <button class="icon-btn" id="dexBtn" aria-label="Digidex">📖</button>
-        <button class="icon-btn" id="resetBtn" aria-label="Recommencer">↺</button>
+        <button class="icon-btn" id="settingsBtn" aria-label="Réglages">⚙️</button>
       </div>
     </header>
 
@@ -49,7 +49,7 @@
       <button data-act="fight"><span>⚔️</span>Combat</button>
       <button data-act="wash"><span>🛁</span>Laver</button>
       <button data-act="heal"><span>💊</span>Soigner</button>
-      <button data-act="light"><span id="lightIcon">💡</span><em id="lightLabel">Dormir</em></button>
+      <button data-act="light"><span id="lightIcon">💤</span><em id="lightLabel">Sieste</em></button>
     </nav>
 
     <nav class="actions hidden" id="feedMenu">
@@ -93,6 +93,26 @@
       <div class="dex" id="dexForms"></div>
       <h3>Adversaires vaincus</h3>
       <div class="dex" id="dexFoes"></div>
+      <button type="submit">Fermer</button>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <form method="dialog">
+      <h2>⚙️ Réglages</h2>
+      <h3>Couleur de la coque</h3>
+      <div class="swatches">
+        <button type="button" data-shell-pick="rose" aria-label="Rose"></button>
+        <button type="button" data-shell-pick="bleu" aria-label="Bleu"></button>
+        <button type="button" data-shell-pick="menthe" aria-label="Menthe"></button>
+        <button type="button" data-shell-pick="soleil" aria-label="Soleil"></button>
+        <button type="button" data-shell-pick="nuit" aria-label="Nuit"></button>
+        <button type="button" data-shell-pick="cristal" aria-label="Cristal"></button>
+      </div>
+      <label class="setting-row"><span>🔊 Sons</span><input type="checkbox" id="soundToggle"></label>
+      <button type="button" class="wide" id="notifBtn">🔔 Activer les notifications</button>
+      <p class="note" id="notifNote"></p>
+      <button type="button" class="wide danger" id="resetBtn">↺ Recommencer avec un nouvel œuf</button>
       <button type="submit">Fermer</button>
     </form>
   </dialog>

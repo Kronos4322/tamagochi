@@ -25,7 +25,10 @@ C'est une web-app installable (PWA) : elle s'ouvre dans le navigateur, s'ajoute 
   - ⚔️ **Combat** : appuie sur *Tirer !* quand la jauge est haute (tout en haut : coup critique). Les adversaires deviennent plus forts à chaque victoire. Une défaite peut blesser ton monstre.
   - 🛁 **Laver** : nettoie les crottes
   - 💊 **Soigner** : guérit quand une tête de mort apparaît
-  - 💡 **Dormir / Réveiller** : la nuit, il récupère de l'énergie et a moins faim
+  - 💤 **Sieste / Réveiller** le jour, 🌙 **Éteindre / Allumer** la nuit
+- **Jour et nuit sur la vraie horloge** : il s'endort tout seul (20 h bébé, 21 h enfant, 22 h adulte) et se réveille à 8 h. Pense à éteindre la lumière : au-delà de 30 minutes allumée, ça compte comme une erreur de soin, et il dort mal.
+- ⚙️ **Réglages** : 6 couleurs de coque, sons 8 bits (activables ou non), notifications.
+- 🔔 **Notifications** : sans serveur, elles fonctionnent quand l'appli tourne en arrière-plan et, sur Android avec l'appli installée, via une vérification périodique décidée par Chrome (quelques fois par jour). Sur iPhone, elles ne peuvent pas arriver quand l'appli est fermée.
 - 📖 **Digidex** : la collection des formes obtenues et des adversaires vaincus, conservée même après la mort de ton monstre.
 - Un **!** clignote quand il a besoin de toi. Négligé trop longtemps, il finit en fantôme 👻.
 
